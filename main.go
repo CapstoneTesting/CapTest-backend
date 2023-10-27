@@ -3,10 +3,16 @@ package main
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
 )
+
+type YourStruct struct {
+	Field1 string `json:"field1"`
+	Field2 int    `json:"field2"`
+}
 
 func main() {
 	//Initiate an engine instance.
@@ -20,7 +26,22 @@ func main() {
 		c.String(200, "Hello world") //Writes given string into response body
 	})
 
-	router.Run(":8080") //Serve and listen for localhost port 8080, attaches router to http.Server.
+	router.POST("/test", func(c *gin.Context) {
+		// Parse the JSON request body into a struct
+		var data YourStruct // Replace YourStruct with your data structure
+
+		if err := c.ShouldBindJSON(&data); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		fmt.Println("HERE")
+		// You can now access the data from the request body in the 'data' variable
+		// Do something with the data, e.g., store it in a database
+		// Respond with a success message
+		c.JSON(http.StatusOK, gin.H{"message": "Data received successfully", "data": data})
+	})
+
+	router.Run(":8081") //Serve and listen for localhost port 8080, attaches router to http.Server.
 }
 
 func LoggerMiddleware() gin.HandlerFunc {
