@@ -2,11 +2,10 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"net/http"
-	"time"
 
-	"github.com/gin-gonic/gin"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 )
 
 type YourStruct struct {
@@ -15,44 +14,27 @@ type YourStruct struct {
 }
 
 func main() {
-	//Initiate an engine instance.
-	router := gin.Default()
+	//Returns a new Mux object that implements the Router interface.
+	r := chi.NewRouter()
+	r.Use(middleware.Logger)
 
-	//Logger to track request method, status and request duration. Use() attaches global middleware to router.
-	router.Use(LoggerMiddleware())
-
-	router.GET("/", func(c *gin.Context) {
-		fmt.Println(c, "its here")
-		c.String(200, "Hello world") //Writes given string into response body
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("Hello World!"))
 	})
 
-	router.POST("/test", func(c *gin.Context) {
-		// Parse the JSON request body into a struct
-		var data YourStruct // Replace YourStruct with your data structure
-
-		if err := c.ShouldBindJSON(&data); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	r.Post("/test", func(w http.ResponseWriter, r *http.Request) {
+		var data YourStruct
+		// Parse the request body
+		err := r.ParseForm()
+		if err != nil {
+			http.Error(w, "Failed to parse form data", http.StatusBadRequest)
 			return
 		}
-		fmt.Println("HERE")
-		// You can now access the data from the request body in the 'data' variable
-		// Do something with the data, e.g., store it in a database
-		// Respond with a success message
-		c.JSON(http.StatusOK, gin.H{"message": "Data received successfully", "data": data})
+
+		// Send a response
+		w.WriteHeader(http.StatusOK)
+		fmt.Println(w, "Result:", data)
 	})
 
-	router.Run(":8081") //Serve and listen for localhost port 8080, attaches router to http.Server.
-}
-
-func LoggerMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		//Std time. Returns current local time.
-		start := time.Now()
-		//Context.Next; only used in middleware, executes pending handlers in the chain inside the calling handler.
-		c.Next()
-		//Std time. Returns time elapsed since start.
-		duration := time.Since(start)
-		//%s, %d are Context types that have exxcess to request and writer types
-		log.Printf("\nRequest - Method: %s | Status: %d | Duration: %v \n", c.Request.Method, c.Writer.Status(), duration)
-	}
+	http.ListenAndServe(":8080", r)
 }
