@@ -1,11 +1,11 @@
 package main
 
 import (
-	"fmt"
+	"encoding/json"
 	"net/http"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/middleware"
 )
 
 type YourStruct struct {
@@ -19,22 +19,40 @@ func main() {
 	r.Use(middleware.Logger)
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("Hello World!"))
+		http.ServeFile(w, r, "/Users/h.lim.10/Desktop/CapTest/database")
 	})
 
+	r.Get("/hello", helloHandler)
+
+	// Define the handler for the POST endpoint at "/test".
 	r.Post("/test", func(w http.ResponseWriter, r *http.Request) {
+		// Parse the JSON request body into a struct.
 		var data YourStruct
-		// Parse the request body
-		err := r.ParseForm()
-		if err != nil {
-			http.Error(w, "Failed to parse form data", http.StatusBadRequest)
+		if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		// Send a response
+		// Process the data or perform some action.
+		// In this example, we'll just send back the received data as a JSON response.
+		responseData := map[string]interface{}{
+			"receivedData": data,
+			"status":       "success",
+		}
+
+		// Serialize the response data as JSON and write it to the response.
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		fmt.Println(w, "Result:", data)
+		if err := json.NewEncoder(w).Encode(responseData); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	})
 
 	http.ListenAndServe(":8080", r)
+}
+
+func helloHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/plain")
+	w.Write([]byte("Hello from Go Backend!"))
 }
