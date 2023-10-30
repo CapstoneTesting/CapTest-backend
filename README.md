@@ -1,2 +1,2 @@
-# Capstone
-foodpanda traineeship capstone project
+# Capstone prep
+Simeple web app routing
