@@ -1,0 +1,22 @@
+# Ignore Go binary and object files
+*.exe
+*.test
+*.out
+*.app
+*.log
+__pycache__/
+vendor/
+
+# Ignore version control directories
+.git/
+.svn/
+
+# Ignore editor-specific files
+.vscode/
+.idea/
+
+# Ignore any other unnecessary files or directories
+node_modules/
+dist/
+logs/
+*.log

@@ -4,6 +4,12 @@ FROM golang:latest
 # Set the working directory inside the container
 WORKDIR /app
 
+# Copy the dependencies for caching
+COPY go.mod go.sum ./
+
+#Run to download dependencies
+RUN go mod download
+
 # Copy the local source code to the container
 COPY . .
 

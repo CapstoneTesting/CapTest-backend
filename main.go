@@ -19,7 +19,8 @@ func main() {
 	r.Use(middleware.Logger)
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "/Users/h.lim.10/Desktop/CapTest/database")
+		w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+		http.ServeFile(w, r, "/Users/h.lim.10/Desktop/CapTest/frontend")
 	})
 
 	r.Get("/hello", helloHandler)
