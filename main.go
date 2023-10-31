@@ -2,15 +2,17 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
+	"github.com/go-chi/cors"
 )
 
-type YourStruct struct {
-	Field1 string `json:"field1"`
-	Field2 int    `json:"field2"`
+type RequestData struct {
+	Message string `json:"message"`
 }
 
 func main() {
@@ -18,42 +20,44 @@ func main() {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
-		http.ServeFile(w, r, "/Users/h.lim.10/Desktop/CapTest/frontend")
+	// Set up CORS middleware with your desired configuration
+	corsMiddleware := cors.New(cors.Options{
+		AllowedOrigins: []string{"*"}, // You can specify specific origins here
+		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		ExposedHeaders: []string{"Link"},
+		MaxAge:         300, // Maximum value for MaxAge
 	})
 
-	r.Get("/hello", helloHandler)
+	// Use the CORS middleware with your router
+	r.Use(corsMiddleware.Handler)
 
-	// Define the handler for the POST endpoint at "/test".
-	r.Post("/test", func(w http.ResponseWriter, r *http.Request) {
-		// Parse the JSON request body into a struct.
-		var data YourStruct
-		if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
+	r.Post("/echo", func(w http.ResponseWriter, r *http.Request) {
+		// Create an instance of the RequestData struct to store the JSON data
+		var requestData RequestData
+
+		// Parse the JSON data from the request body
+		decoder := json.NewDecoder(r.Body)
+		if err := decoder.Decode(&requestData); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		// Process the data or perform some action.
-		// In this example, we'll just send back the received data as a JSON response.
-		responseData := map[string]interface{}{
-			"receivedData": data,
-			"status":       "success",
-		}
+		// Print and echo the received JSON data
+		fmt.Printf("Received POST request with JSON data: %s\n", requestData.Message)
 
-		// Serialize the response data as JSON and write it to the response.
+		// Echo the JSON data in the response
+		responseData := RequestData{Message: requestData.Message}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		if err := json.NewEncoder(w).Encode(responseData); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+		json.NewEncoder(w).Encode(responseData)
 	})
 
-	http.ListenAndServe(":8080", r)
-}
-
-func helloHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/plain")
-	w.Write([]byte("Hello from Go Backend!"))
+	// Start the server
+	port := ":8200"
+	fmt.Printf("Server is listening on port %s\n", port)
+	err := http.ListenAndServe(port, r)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
