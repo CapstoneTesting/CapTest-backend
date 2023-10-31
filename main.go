@@ -54,7 +54,7 @@ func main() {
 	})
 
 	// Start the server
-	port := ":8200"
+	port := ":8080"
 	fmt.Printf("Server is listening on port %s\n", port)
 	err := http.ListenAndServe(port, r)
 	if err != nil {
